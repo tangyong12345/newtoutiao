@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Users &laquo; Admin</title>
+  <link rel="stylesheet" href="/public/vendors/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/public/vendors/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" href="/public/vendors/nprogress/nprogress.css">
+  <link rel="stylesheet" href="/public/css/admin.css">
+  <script src="/public/vendors/nprogress/nprogress.js"></script>
+</head>
+<body>
+  <script>NProgress.start()</script>
+
+  <div class="main">
+   <!-- 引入公共文件 include -->
+   {{ include "./navber.html" }}
+    <div class="container-fluid">
+      <div class="page-title">
+        <h1>用户</h1>
+      </div>
+      <!-- 有错误信息时展示 -->
+      <!-- <div class="alert alert-danger">
+        <strong>错误！</strong>发生XXX错误
+      </div> -->
+      <div class="row">
+        <div class="col-md-4">
+          <form>
+            <h2>添加新用户</h2>
+            <div class="form-group">
+              <label for="email">邮箱</label>
+              <input id="email" class="form-control" name="email" type="email" placeholder="邮箱">
+            </div>
+            <div class="form-group">
+              <label for="nickname">昵称</label>
+              <input id="nickname" class="form-control" name="nickname" type="text" placeholder="昵称2-16字符">
+            </div>
+            <div class="form-group">
+              <label for="password">密码</label>
+              <input id="password" class="form-control" name="password" type="text" placeholder="密码">
+            </div>
+            <div class="form-group">
+              <button class="btn btn-primary but" type="button">添加</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-md-8">
+          <div class="page-action">
+            <!-- show when multiple checked -->
+            <a class="btn btn-danger btn-sm" href="javascript:;" style="display: block">批量删除</a>
+          </div>
+          <table class="table table-striped table-bordered table-hover">
+            <thead>
+               <tr>
+                <th class="text-center" width="40"><input type="checkbox"></th>
+                <th class="text-center" width="80">头像</th>
+                <th>邮箱</th>
+                <th>昵称</th>
+                <th>状态</th>
+                <th class="text-center" width="100">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{each userData}}
+              <tr>
+                <td class="text-center"><input type="checkbox"></td>
+                <td class="text-center"><img class="avatar" src={{$value.photo}}></td>
+                <td>{{$value.email}}</td>
+                <td>{{$value.nickname}}</td>
+                <td>{{$value.status}}</td>
+                <td class="text-center">
+                  <a href="/userSet/{{$value.user_id}}" class="btn btn-default btn-xs">编辑</a>
+                  <a href="javascript:;" user_id='{{$value.user_id}}' class="del btn btn-danger btn-xs">删除</a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- 引入公共文件 include -->
+    {{ include "./aside.html" }}
+
+  <script src="/public/vendors/jquery/jquery.js"></script>
+  <script src="/public/vendors/bootstrap/js/bootstrap.js"></script>
+  <script src="/public/vendors/layer/layer.js"></script>
+  <script>NProgress.done()</script>
+</body>
+  <script>
+
+    $(function(){
+      $('.but').click(function(){
+        var email = $.trim($('#email').val());
+        var nickname = $.trim($('#nickname').val());
+        var password = $.trim($('#password').val());
+
+        if(!email || !nickname || !password){
+          layer.msg('不能为空',{icon:2})
+          return;
+        }
+        var emailReg = /^\w+\@(?:\w+\.)+[a-zA-Z]{2,5}$/g;
+        if(!emailReg.test(email)){
+          layer.msg('邮箱格式不合法',{icon:2});
+          return;
+        }
+        let name = /[\u4e00-\u9fa5]{2,16}/
+        if(!name.test(nickname)){
+          layer.msg('名字格式错误',{icon:2});
+          return;
+        }
+
+        $.post('/addUser',{email,nickname,password},function(res){
+          if(res.code == 200){
+            $('form input').val('');
+            $('tbody').append(`
+              <tr>
+                <td class="text-center"><input type="checkbox"></td>
+                <td class="text-center"><img class="avatar" src=""></td>
+                <td>${email}</td>
+                <td>${nickname}</td>
+                <td>${password}</td>
+                <td class="text-center">
+                  <a href="/userSet/${res.user_id}" class="btn btn-default btn-xs">编辑</a>
+                  <a href="javascript:;" user_id='${res.user_id}' class="del btn btn-danger btn-xs">删除</a>
+                </td>
+              </tr>
+            `)
+            layer.msg(res.message,{icon:1});
+          }else{
+            layer.msg(res.message,{icon:2});
+          }
+        })
+
+      })
+
+      $('tbody').on('click','.del',function(){
+        if(!confirm('确定删除吗!')){
+          return;
+        }
+        var _this = $(this);
+        var user_id = _this.attr('user_id');
+
+        $.post('/delUser',{user_id},function(res){
+          if(res.code == 200){
+            _this.parents('tr').remove();
+            layer.msg(res.message,{icon:1});
+          }else{
+            layer.msg(res.message,{icon:2});
+          }
+        })
+      })
+
+
+
+
+    })
+
+  </script>
+</html>
